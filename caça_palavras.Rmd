@@ -1,0 +1,196 @@
+---
+title: "Caça palavras"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars, results='hide', echo = FALSE}
+##############################
+# Funções
+##############################
+
+posiciona_palavra <- function(pal,m,sent,dire){
+  
+  TAMANHO = c(nrow(m),ncol(m))
+  
+  # Tamanho da palavra
+  tam_pal <- nchar(pal)
+  
+  check <- FALSE
+  cont <- 1
+  
+  # print(c(dire,sent))
+  
+  while(check == FALSE & cont <= 10){
+    # print(c(check,cont))
+    
+    # Escolhendo a posição inicial
+    if(dire == "Vertical"){
+      # print("Entrou Horizonal")
+      pos_ini_y <- sample(seq(1,TAMANHO[2]),1)
+      pos_fin_y <- pos_ini_y
+      
+      if(sent == "Positivo"){
+        pos_ini_x <- sample(seq(1,TAMANHO[1]-tam_pal+1),1)
+        pos_fin_x <- pos_ini_x + tam_pal - 1
+      }else{
+        pos_ini_x <- sample(seq(tam_pal,TAMANHO[1]),1)
+        pos_fin_x <- pos_ini_x - tam_pal + 1
+      }
+      
+    }else if(dire == "Horizontal"){
+      # print("Entrou vertical")
+      pos_ini_x <- sample(seq(1,TAMANHO[1]),1)
+      pos_fin_x <- pos_ini_x
+      
+      if(sent == "Positivo"){
+        pos_ini_y <- sample(seq(1,TAMANHO[2]-tam_pal+1),1)
+        pos_fin_y <- pos_ini_y + tam_pal - 1
+      }else{
+        pos_ini_y <- sample(seq(tam_pal,TAMANHO[2]),1)
+        pos_fin_y <- pos_ini_y - tam_pal + 1
+      }
+      
+    }else{
+      
+      # print("Entrou Diagonal")
+      
+      if(sent == "Positivo"){
+        pos_ini_x <- sample(seq(1,TAMANHO[1]-tam_pal+1),1)
+        pos_fin_x <- pos_ini_x + tam_pal - 1
+        
+        pos_ini_y <- sample(seq(1,TAMANHO[2]-tam_pal+1),1)
+        pos_fin_y <- pos_ini_y + tam_pal - 1
+        
+      }else{
+        pos_ini_x <- sample(seq(tam_pal,TAMANHO[1]),1)
+        pos_fin_x <- pos_ini_x - tam_pal + 1
+        
+        pos_ini_y <- sample(seq(tam_pal,TAMANHO[2]),1)
+        pos_fin_y <- pos_ini_y - tam_pal + 1
+      }    
+      
+    }
+    
+    # Checa se já existe alguma letra nessas posições
+    # print("Criando posiçoes")
+    palavra_pos <- c()
+    
+    posicoes_x <- seq(pos_ini_x,pos_fin_x)
+    posicoes_y <- seq(pos_ini_y,pos_fin_y)
+    
+    # print("posicoes_x:")
+    # print(posicoes_x)
+    # print("posicoes_y:")
+    # print(posicoes_y)
+    
+    for(i in seq(nchar(pal))){
+      palavra_pos <- c(palavra_pos,m[posicoes_x[pmin(length(posicoes_x),i)],posicoes_y[pmin(length(posicoes_y),i)]])  
+    }
+    # print("palavra_pos:")
+    # print(palavra_pos)
+    # print("check")
+    check <- ifelse(all((palavra_pos == "") | (palavra_pos == strsplit(pal,"")[[1]])),TRUE,FALSE)
+    cont <- cont + 1
+    # print("fim")
+    
+  }
+  
+  # print("return")
+  return(c(pos_ini_x,pos_ini_y,pos_fin_x,pos_fin_y))
+  
+}
+```
+
+
+```{r, results='hide', echo = FALSE}
+###########################
+# Parâmetros
+###########################
+
+palavras <- c("GRAÇA","DIEGO","EMILIA","LIZ","PRISCILLA","SEVERINO","PATRICIA","JOÃOZINHO","FRANCISCO","EUNICE")
+TAMANHO = c(20,20)
+
+m <- matrix(rep("",prod(TAMANHO)),nrow = TAMANHO[1])
+```
+
+
+```{r, results='hide', echo = FALSE}
+
+#################################################
+# Criando a matriz com os nomes
+#################################################
+
+for(pal in palavras){
+  
+  # print(pal)
+
+  # Definir aleatoriamente a direção da palavra
+  dire <- sample(c("Horizontal","Vertical","Diagonal","Diagonal"),1)
+  
+  # Definir aleatoriamente a sentido da palavra
+  sent <- sample(c("Positivo","Negativo"),1)
+  # print(c(dire,sent))
+  
+  # Pegando as posições para colocar a palavra
+  vec_pos <- posiciona_palavra(pal,m,sent,dire)
+  posicoes_x <- seq(vec_pos[1],vec_pos[3])
+  posicoes_y <- seq(vec_pos[2],vec_pos[4])
+  
+  # Inserindo as letras
+  pal_dividida <- strsplit(pal,"")[[1]]
+  for(i in seq(nchar(pal))){
+    # m[posicoes_x[i],posicoes_y[i]] <- pal_dividida[i]
+    m[posicoes_x[pmin(length(posicoes_x),i)],posicoes_y[pmin(length(posicoes_y),i)]] <- pal_dividida[i]
+  }
+  
+}
+
+m_solved <- m
+
+
+```
+
+
+```{r, results='hide', echo = FALSE}
+#################################################
+# Preenchendo o restante da matriz
+#################################################
+
+# Inserindo letras aleatórias na matriz
+qtde_vazios <- length(m[m == ""])
+subst_vazios <- sample(LETTERS,qtde_vazios,replace = TRUE)
+m[m == ""] <- subst_vazios
+```
+
+
+
+```{r, echo=FALSE}
+#################################################
+# Colocando a matriz em uma imagem
+#################################################
+
+par(mar = rep(1,4))
+plot(0,type='n',axes=FALSE,ann=FALSE, xlim=c(0,TAMANHO[1]), ylim=c(0,TAMANHO[2]), frame.plot = FALSE)
+for(j_x in seq(TAMANHO[1])){
+  for(j_y in seq(TAMANHO[2])){
+  text(j_x,TAMANHO[2] + 1 -j_y, m[j_y,j_x],cex = 0.8)
+  }
+}
+```
+
+```{r, echo=FALSE, results='markup'}
+#################################################
+# Colocando a lista de palavras
+#################################################
+
+par(mar = rep(1,4))
+plot(0,type='n',axes=FALSE,ann=FALSE, xlim=c(0,5), ylim=c(0,2*length(palavras)), frame.plot = FALSE)
+for(j_y in seq(length(palavras))){
+  text(1,2*length(palavras) + 1 -j_y, palavras[j_y],cex = 0.8, adj = 0)
+}
+
+```
